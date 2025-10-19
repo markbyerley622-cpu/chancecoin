@@ -339,38 +339,68 @@ document.addEventListener("DOMContentLoaded", () => {
         stake: selectedStake, 
         side: userSide 
       });
-      socket.once("matchResult", (data) => {
-        spinning = false;
-        const result = data.result;
-        flipCoin(result);
-        const userWon = data.winner === window.userAddress;
-        const winAmount = ethers.utils.formatEther(data.amount);
-        
-        if (userWon) {
-          showNotification(`You won! ${winAmount} BNB`, 'success');
-          triggerConfetti();
-        } else {
-          showNotification(`You lost`, 'error');
-          triggerLoserX();
-        }
-        
-        const li = document.createElement("li");
-        li.textContent = `Match: ${data.winner === window.userAddress ? 'WIN' : 'LOSS'}`;
-        recentList.prepend(li);
-        
-        joinGameBtn.disabled = false;
-        userSide = null;
-        selectedStake = null;
-      });
-    } catch (err) {
-      spinning = false;
-      headsBtn.disabled = false;
-      tailsBtn.disabled = false;
-      joinGameBtn.disabled = false;
-      console.error("Error:", err);
-      showNotification("Error: " + (err.message || "Unknown error"), 'error');
-      userSide = null;
-      selectedStake = null;
-    }
+
+
+socket.once("matchResult", (data) => {
+  console.log("Match result data received:", data);
+
+  spinning = false;
+  const result = data.result;
+  flipCoin(result);
+
+  const userWon = data.winner.toLowerCase() === window.userAddress.toLowerCase();
+  const winAmount = ethers.utils.formatEther(data.amount);
+  const opponent = data.opponent || "Unknown";
+
+  if (userWon) {
+    showNotification(
+      `🎉 You won ${winAmount} BNB against ${opponent.slice(0, 6)}...${opponent.slice(-4)}`,
+      "success"
+    );
+    triggerConfetti();
+  } else {
+    showNotification(
+      `❌ You lost against ${opponent.slice(0, 6)}...${opponent.slice(-4)}`,
+      "error"
+    );
+    triggerLoserX();
   }
+
+  // === Update Recent Matches UI ===
+  const li = document.createElement("li");
+  li.innerHTML = `
+    <div class="match-entry ${userWon ? "win" : "loss"}">
+      <span class="match-status">${userWon ? "✅ WIN" : "❌ LOSS"}</span>
+<span class="match-opponent">vs ${opponent}</span>
+      <span class="match-stake">${winAmount} BNB</span>
+    </div>
+  `;
+  recentList.prepend(li);
+
+  // Keep only the latest 10
+  while (recentList.children.length > 10) {
+    recentList.removeChild(recentList.lastChild);
+  }
+
+  // Reset state
+  joinGameBtn.disabled = false;
+  userSide = null;
+  selectedStake = null;
 });
+
+// <-- make sure you still have this from earlier in your code:
+} catch (err) {
+  spinning = false;
+  headsBtn.disabled = false;
+  tailsBtn.disabled = false;
+  joinGameBtn.disabled = false;
+  console.error("Error:", err);
+  showNotification("Error: " + (err.message || "Unknown error"), 'error');
+  userSide = null;
+  selectedStake = null;
+}
+} // closes pickSide function
+
+}); // closes DOMContentLoaded
+
+
