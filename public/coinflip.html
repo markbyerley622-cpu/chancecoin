@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Coin Flip Demo</title>
+<style>
+  #coin {
+    width: 120px;
+    height: 120px;
+    margin: 50px auto;
+    border-radius: 50%;
+    background: gold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 24px;
+    perspective: 1000px;
+    transition: transform 1s ease-in-out;
+  }
+
+  .flip-heads {
+    transform: rotateY(1800deg);
+    background: gold;
+  }
+
+  .flip-tails {
+    transform: rotateY(1620deg);
+    background: silver;
+  }
+
+  button {
+    margin: 10px;
+    padding: 10px 20px;
+  }
+</style>
+</head>
+<body>
+
+<div id="coin">?</div>
+<button id="headsBtn">Flip Heads</button>
+<button id="tailsBtn">Flip Tails</button>
+
+<script>
+  const coin = document.getElementById('coin');
+  const headsBtn = document.getElementById('headsBtn');
+  const tailsBtn = document.getElementById('tailsBtn');
+
+  function flipCoin(result) {
+    coin.classList.remove('flip-heads', 'flip-tails');
+    void coin.offsetWidth; // restart animation
+    coin.classList.add(result === 'heads' ? 'flip-heads' : 'flip-tails');
+    coin.textContent = result === 'heads' ? 'H' : 'T';
+  }
+
+  headsBtn.addEventListener('click', () => flipCoin('heads'));
+  tailsBtn.addEventListener('click', () => flipCoin('tails'));
+</script>
+
+</body>
+</html>

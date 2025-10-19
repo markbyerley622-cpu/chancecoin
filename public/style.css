@@ -1,0 +1,562 @@
+/*/* === DYNASTY JACKPOT / CHANCE COIN STYLE === */
+body {
+  font-family: 'Noto Serif SC', serif;
+  background: radial-gradient(circle at center, #6e0000 0%, #2b0000 100%);
+  color: #F7F4EA;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+/* === HEADER === */
+.top-header {
+  background: linear-gradient(90deg, #8B0000, #A40000);
+  border-bottom: 2px solid #FFD700;
+  color: #FFD700;
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
+}
+
+.logo span {
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+/* === CONTRACT ADDRESS === */
+.contract-address {
+  font-size: 0.85rem;
+  color: #FFD700;
+  background: rgba(43, 0, 0, 0.5);
+  border: 1px solid #FFD700;
+  border-radius: 12px;
+  padding: 4px 10px;
+  margin: 5px 0;
+}
+
+/* === NAVIGATION === */
+.nav {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.nav-link {
+  color: #FFD700;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #FFF8DC;
+}
+
+.nav-link.highlight {
+  color: #FFF8DC;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+}
+
+/* === MOBILE MENU TOGGLE === */
+.menu-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.menu-toggle span {
+  display: block;
+  width: 25px;
+  height: 3px;
+  background: #FFD700;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.menu-toggle.open span:nth-child(1) {
+  transform: rotate(45deg) translateY(8px);
+}
+.menu-toggle.open span:nth-child(2) {
+  opacity: 0;
+}
+.menu-toggle.open span:nth-child(3) {
+  transform: rotate(-45deg) translateY(-8px);
+}
+
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: flex;
+  }
+  .nav {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    background: rgba(43, 0, 0, 0.95);
+    border-top: 1px solid #FFD700;
+  }
+  .nav.active {
+    display: flex;
+  }
+  .nav-link {
+    padding: 10px 0;
+  }
+}
+
+/* === BUTTONS & SELECT === */
+button,
+select {
+  background: #FFD700;
+  color: #2B0000;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  margin: 5px;
+}
+
+button:hover,
+select:hover {
+  background: #FFE55C;
+  transform: translateY(-2px);
+}
+/* === COIN FLIP === */
+.coin-container {
+  margin: 40px auto;
+  perspective: 1000px;
+}
+
+.coin {
+  width: 150px;
+  height: 150px;
+  margin: 0 auto;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 1s ease-in-out;
+}
+
+.coin .side {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 4px solid #ffd700;
+  background: radial-gradient(circle at 30% 30%, #fff6a3 0%, #ffd700 40%, #b8860b 85%);
+  box-shadow:
+    inset 0 0 10px rgba(255, 215, 0, 0.7),
+    0 0 25px rgba(255, 215, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+  color: #fff8dc;
+  text-shadow: 0 0 6px rgba(0,0,0,0.5);
+  font-weight: bold;
+  font-size: 1.2rem;
+  position: relative;
+}
+
+/* Center content */
+.coin-inner {
+  position: relative;
+  text-align: center;
+}
+
+/* GOLD CLOVER */
+.gold-clover {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 5px;
+}
+
+.gold-clover::before {
+  content: "♣";
+  font-size: 3rem;
+  color: #ffd700;
+  background: linear-gradient(135deg, #fff6a3, #ffd700 40%, #b8860b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow:
+    0 0 6px rgba(255, 215, 0, 0.8),
+    0 0 12px rgba(255, 215, 0, 0.5);
+}
+
+/* Coin text */
+.coin-text {
+  margin-top: 5px;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  color: #fff8dc;
+}
+
+/* Small gold stars around edges */
+.coin .side::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #fff6a3;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.9);
+}
+.coin .side::after {
+  content: "";
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #fff6a3;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.9);
+}
+
+/* Back side rotation */
+.coin .tails {
+  transform: rotateY(180deg);
+}
+
+/* Flip animations */
+.flip-heads {
+  animation: flip-heads 1s forwards;
+}
+.flip-tails {
+  animation: flip-tails 1s forwards;
+}
+
+@keyframes flip-heads {
+  0% { transform: rotateY(0); }
+  100% { transform: rotateY(1800deg); }
+}
+@keyframes flip-tails {
+  0% { transform: rotateY(0); }
+  100% { transform: rotateY(1620deg); }
+}
+
+
+/* === SECTIONS === */
+section {
+  background: rgba(43, 0, 0, 0.8);
+  border: 2px solid #FFD700;
+  border-radius: 15px;
+  padding: 25px;
+  max-width: 650px;
+  margin: 30px auto;
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
+}
+
+/* === FOOTER === */
+footer {
+  margin-top: 40px;
+  padding: 20px;
+  background: #3b0000;
+  border-top: 2px solid #FFD700;
+  color: #FFD700;
+}
+
+footer .disclaimer {
+  font-size: 0.85rem;
+  color: #F7F4EA;
+  margin-top: 10px;
+  opacity: 0.8;
+}
+
+
+/* === 3D COIN FLIP === */
+.coin-container {
+  perspective: 1000px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 40px 0;
+}
+
+.coin {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  transform-style: preserve-3d;
+  transition: transform 1s ease-in-out;
+}
+
+.coin .side {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 700;
+  font-size: 22px;
+  border: 3px solid #FFD700;
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+}
+
+.coin .heads {
+  background: radial-gradient(circle at center, #FFD700 0%, #8B0000 80%);
+  color: white;
+}
+
+.coin .tails {
+  background: radial-gradient(circle at center, #8B0000 0%, #FFD700 80%);
+  color: #fff;
+  transform: rotateY(180deg);
+}
+
+.flip-heads {
+  transform: rotateY(1800deg);
+}
+
+.flip-tails {
+  transform: rotateY(1620deg);
+}
+
+.wallet-connect {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.wallet-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #8B0000, #FFD700);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  font-family: 'Noto Serif SC', serif;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
+}
+
+.wallet-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+}
+
+.wallet-logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  padding: 2px;
+}
+
+#walletStatus {
+  margin-top: 10px;
+  color: #FFD700;
+  font-size: 14px;
+}
+
+.flip-spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0%   { transform: rotateY(0deg); }
+  100% { transform: rotateY(360deg); }
+}
+
+.flip-heads  { transform: rotateY(0deg); }
+.flip-tails  { transform: rotateY(180deg); }
+
+
+/* Confetti container */
+#confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 9999;
+}
+
+/* Confetti pieces */
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: red;
+  opacity: 0.8;
+  transform: rotate(0deg);
+  animation: fall 3s linear forwards;
+}
+
+@keyframes fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+#loser-cross {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 150px;
+  height: 150px;
+  transform: translate(-50%, -50%) scale(0);
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0; /* start hidden */
+}
+
+#loser-cross::before,
+#loser-cross::after {
+  content: '';
+  position: absolute;
+  width: 150px;
+  height: 10px;
+  background-color: red;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+#loser-cross::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+@keyframes pop {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+
+/* === CUSTOM NOTIFICATIONS === */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  min-width: 300px;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out;
+  z-index: 10000;
+  border: 2px solid #FFD700;
+}
+
+.notification-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.notification-close:hover {
+  transform: scale(1.2);
+}
+
+.notification-success {
+  background: linear-gradient(90deg, #2B5700, #4A8C00);
+  color: #FFD700;
+}
+
+.notification-error {
+  background: linear-gradient(90deg, #8B0000, #D00000);
+  color: #FFD700;
+}
+
+.notification-info {
+  background: linear-gradient(90deg, #1a4d5c, #2d6f7f);
+  color: #FFD700;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .notification {
+    min-width: 250px;
+    right: 10px;
+    left: 10px;
+  }
+}
+
+.instructions {
+  background: rgba(43, 0, 0, 0.75); /* same tone as sections, semi-transparent */
+  border: 2px solid #FFD700; /* Golden border */
+  border-radius: 15px;
+  padding: 25px 30px;
+  max-width: 600px;
+  margin: 40px auto;
+  color: #F7F4EA; /* matches global text color */
+  font-family: 'Noto Serif SC', serif;
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
+  backdrop-filter: blur(8px);
+  text-align: left;
+}
+
+.instructions h2 {
+  text-align: center;
+  color: #FFD700; /* Golden Yellow */
+  margin-bottom: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+}
+
+.instructions ol {
+  margin: 0;
+  padding-left: 22px;
+  list-style: decimal;
+}
+
+.instructions li {
+  margin-bottom: 12px;
+  line-height: 1.7;
+}
+
+.instructions li span {
+  color: #FFD700; /* highlight in golden yellow */
+  font-weight: 600;
+}

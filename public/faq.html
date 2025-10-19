@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🐉 CHANCE COIN | FAQ</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500&display=swap" rel="stylesheet">
+
+<!-- 💎 Dynasty Header Styles (you can move this to style.css later) -->
+  <style>
+/* === Dynasty Header Styled Like Original === */
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(90deg, #8B0000, #A40000);
+  padding: 15px 20px;
+  border-bottom: 2px solid #FFD700;
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
+  border-radius: 0 0 20px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+/* === Logo === */
+.logo {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 1.4rem;
+  color: #FFD700;
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+}
+
+.logo span {
+  color: #F7F4EA;
+}
+
+/* === Navigation === */
+.nav {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+}
+
+.nav-link {
+  color: #FFD700;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: #FFF8DC;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+  transform: scale(1.05);
+}
+
+/* === Highlight External Link === */
+.nav-link.highlight {
+  color: #FFF8DC;
+  border: 1.5px solid #FFD700;
+  padding: 6px 14px;
+  border-radius: 12px;
+  background: rgba(43, 0, 0, 0.5);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+.nav-link.highlight:hover {
+  background: linear-gradient(90deg, #FFD700, #FFAA00);
+  color: #2B0000;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+}
+
+/* === Hamburger Menu === */
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  cursor: pointer;
+  width: 28px;
+  height: 22px;
+}
+
+.menu-toggle span {
+  height: 3px;
+  background: #FFD700;
+  margin: 3px 0;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.menu-toggle.open span:nth-child(1) {
+  transform: rotate(45deg) translateY(8px);
+}
+.menu-toggle.open span:nth-child(2) {
+  opacity: 0;
+}
+.menu-toggle.open span:nth-child(3) {
+  transform: rotate(-45deg) translateY(-8px);
+}
+
+/* === Responsive Design === */
+@media (max-width: 768px) {
+  .top-header {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 12px 20px;
+  }
+
+  .logo {
+    font-size: 1.2rem;
+  }
+
+  .menu-toggle {
+    display: flex;
+  }
+
+  .nav {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    text-align: center;
+    margin-top: 12px;
+    background: rgba(43, 0, 0, 0.95);
+    border-top: 1px solid #FFD700;
+    border-radius: 0 0 15px 15px;
+    padding: 10px 0;
+  }
+
+  .nav.active {
+    display: flex;
+  }
+
+  .nav-link {
+    font-size: 0.95rem;
+    padding: 10px 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo {
+    font-size: 1.1rem;
+  }
+  .nav-link {
+    font-size: 0.9rem;
+  }
+}
+
+  </style>
+</head>
+
+<body>
+
+<!-- === HEADER === -->
+<header class="top-header">
+  <div class="logo">
+    🏯 <span>CHANCE COIN</span>
+  </div>
+
+  <!-- === Hamburger Menu (for mobile) === -->
+  <div class="menu-toggle" id="menu-toggle">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+
+
+<!-- === Navigation Bar === -->
+<nav class="nav">
+  <a href="index.html" class="nav-link highlight">🏠 Home</a>
+  <a 
+    href="https://x.com/i/communities/1979291401788457021" 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    class="nav-link"
+  >
+    🐦 Follow X
+  </a>
+</nav>
+</header>
+
+
+
+  <!-- === HERO === -->
+  <section class="hero">
+    <h1>📜 Frequently Asked Questions</h1>
+    <p class="subtitle">Understand how to play, verify fairness, and claim your rewards.</p>
+  </section>
+
+ <section class="pools">
+  <div class="pool-row">
+
+    <!-- HOW TO PLAY -->
+    <div class="pool">
+      <h3>🎮 How to Play</h3>
+      <p>Welcome to <strong>Chance Coin</strong>! Pick Heads or Tails and place your stake in BNB.</p>
+      <p>The game matches you with another player who chose the opposite side and the same stake.</p>
+      <p>Once matched, the smart contract flips the coin — the winner takes the pot 50/50.</p>
+    </div>
+
+    <!-- CONNECT WALLET -->
+    <div class="pool">
+      <h3>🔗 Connect Your Wallet</h3>
+      <p>To play, connect your wallet (MetaMask or compatible wallets) securely to the platform.</p>
+      <p>All bets and payouts are handled automatically — no manual transactions required.</p>
+    </div>
+
+    <!-- CHOOSE STAKE -->
+    <div class="pool">
+      <h3>💰 Choose Your Stake</h3>
+      <p>Select how much BNB you want to wager. Stakes are flexible, from 0.01 BNB up to your preferred limit.</p>
+      <p>The smart contract locks in your stake until the game completes.</p>
+    </div>
+
+    <!-- PICK HEADS OR TAILS -->
+    <div class="pool">
+      <h3>🎯 Pick Heads or Tails</h3>
+      <p>Make your call and wait for an opponent with the same stake and the opposite choice.</p>
+      <p>The coin flip is fair, fully on-chain, and transparent.</p>
+    </div>
+
+  </div>
+
+      <!-- CONTACT -->
+      <div class="pool">
+        <h3>📧 Support & Contact</h3>
+        <p>Need assistance or want to report a bug?</p>
+        <p>Reach out via our official Twitter listed in our documentation.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- === FOOTER === -->
+  <footer>
+    <p>© 2025 Chance Coin — Built on BNB Chain</p>
+    <div class="disclaimer">
+      <p><strong>免责声明 DISCLAIMER</strong></p>
+      <p>这不是彩票或国家附属游戏。仅供娱乐。请查看您当地的法律。</p>
+      <p>Not a lottery or state-affiliated game. Entertainment only.</p>
+      <p> 加密货币涉及风险 | k</p>
+    </div>
+  </footer>
+
+
+
+  <!-- === BACKGROUND EFFECTS === -->
+  <script src="script.js"></script>
+</body>
+</html>

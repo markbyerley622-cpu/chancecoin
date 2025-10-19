@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🐉 Dynasty Jackpot | VRF Winners</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500&display=swap" rel="stylesheet">
+  <style>
+
+/* === Dynasty Header === */
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(180deg, rgba(43, 0, 0, 0.95), rgba(20, 0, 0, 0.85));
+  padding: 14px 30px;
+  border-bottom: 2px solid #FFD700;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.25);
+  border-radius: 0 0 20px 20px;
+  backdrop-filter: blur(6px);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+/* === Logo === */
+.logo {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 1.3rem;
+  color: #FFD700;
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+}
+
+.logo span {
+  color: #F7F4EA;
+}
+
+/* === Navigation === */
+.nav {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+}
+
+.nav-link {
+  color: #FFD700;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: #FF3131;
+  text-shadow: 0 0 8px #FFD700;
+  transform: scale(1.05);
+}
+
+/* === Highlight External Link === */
+.nav-link.highlight {
+  color: #FFD700;
+  border: 1.5px solid #FFD700;
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: rgba(43, 0, 0, 0.5);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+.nav-link.highlight:hover {
+  background: linear-gradient(90deg, #FFD700, #FF3131);
+  color: #000;
+  text-shadow: none;
+}
+
+/* === Winner Table Section === */
+.winner-table-section {
+  background: rgba(43, 0, 0, 0.85);
+  border: 2px solid #FFD700;
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 1000px;
+  margin: 50px auto;
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
+  overflow-x: auto;
+}
+
+/* === Table === */
+.winner-table-section h2 {
+  color: #FFD700;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+  margin-bottom: 20px;
+  font-size: 1.6rem;
+  text-align: center;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #F7F4EA;
+  text-align: center;
+  font-size: 0.95rem;
+  background: rgba(30, 0, 0, 0.5);
+  border-radius: 10px;
+  overflow: hidden;
+  min-width: 600px; /* ensures scroll on small screens */
+}
+
+thead {
+  background: rgba(255, 215, 0, 0.15);
+  border-bottom: 2px solid #FFD700;
+}
+
+th, td {
+  padding: 12px 8px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+th {
+  color: #FFD700;
+  font-weight: bold;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
+}
+
+tr:hover {
+  background: rgba(255, 215, 0, 0.1);
+  transition: background 0.3s;
+}
+
+.vrf-link, .tx-link {
+  color: #FFD700;
+  text-decoration: underline;
+  transition: 0.3s;
+}
+
+.vrf-link:hover, .tx-link:hover {
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
+}
+
+/* === Responsive Design === */
+@media (max-width: 768px) {
+  .top-header {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 12px 20px;
+  }
+
+  .menu-toggle {
+    display: flex;
+  }
+
+  /* Hide nav by default */
+  .nav {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    text-align: center;
+    margin-top: 12px;
+    background: rgba(43, 0, 0, 0.9);
+    border-top: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 0 0 15px 15px;
+    padding: 10px 0;
+  }
+
+  /* When menu active */
+  .nav.active {
+    display: flex;
+  }
+
+  .nav-link {
+    font-size: 0.95rem;
+    padding: 8px 10px;
+    width: 100%;
+  }
+}
+
+/* Center the whole section horizontally */
+.winner-table-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* centers table */
+  justify-content: center;
+  margin: 60px auto;
+  width: 90%;
+  max-width: 1000px;
+}
+
+/* Ensure table itself is centered inside */
+.winner-table-section table {
+  margin: 0 auto;
+}
+
+  th, td {
+    padding: 10px 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo {
+    font-size: 1rem;
+  }
+
+  .nav {
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .nav-link {
+    display: block;
+    width: 100%;
+    text-align: center;
+    border-radius: 6px;
+  }
+
+  .winner-table-section h2 {
+    font-size: 1.2rem;
+  }
+}
+
+
+/* === FLOATING LANTERNS & PETALS BACKGROUND === */
+#floating-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0; /* stays behind everything */
+  pointer-events: none;
+}
+
+.lantern, .petal {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+/* Lanterns (golden glowing orbs) */
+.lantern {
+  width: 25px;
+  height: 25px;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.9), rgba(255, 140, 0, 0));
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+  animation: floatLantern linear infinite;
+}
+
+/* Petals (soft glowing flakes) */
+.petal {
+  width: 15px;
+  height: 15px;
+  background: radial-gradient(circle, rgba(255, 182, 193, 0.9), rgba(255, 182, 193, 0));
+  box-shadow: 0 0 8px rgba(255, 182, 193, 0.5);
+  animation: floatPetal linear infinite;
+  filter: blur(0.5px);
+}
+
+/* Lantern animation */
+@keyframes floatLantern {
+  0% {
+    transform: translateY(100vh) translateX(0) rotate(0deg);
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-10vh) translateX(20px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Petal animation */
+@keyframes floatPetal {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+
+  </style>
+</head>
+
+<body>
+
+
+<!-- === HEADER === -->
+<header class="top-header">
+  <div class="logo">
+    🏯 <span>DYNASTY JACKPOT</span>
+  </div>
+
+  <!-- === Hamburger Menu (for mobile) === -->
+  <div class="menu-toggle" id="menu-toggle">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+
+  <nav class="nav">
+    <a href="index.html" class="nav-link">Home</a>
+    <a href="faq.html" class="nav-link">FAQ</a>
+    <a href="vrf-winners.html" class="nav-link active">VRF Winners</a>
+    <a 
+      href="https://bscscan.com/address/0x96373121b2e845c730a4c018de5fbcea3d68373a#code"
+      class="nav-link highlight"
+      target="_blank">
+      VRF Smart Contract
+    </a>
+  </nav>
+</header>
+
+
+  <!-- === HERO === -->
+  <section class="hero">
+    <h1>🏆 Verifiable Random Winners</h1>
+    <p class="subtitle">All results are powered by <strong>Chainlink VRF</strong> — ensuring transparent, provably fair draws.</p>
+  </section>
+
+
+
+  <!-- === FULL WINNERS TABLE === -->
+<section class="winner-table-section">
+  <h2>🏮 FULL Previous Verified Winners</h2>
+
+  <table id="winners-table">
+    <thead>
+      <tr>
+        <th>Pool</th>
+        <th>Wallet</th>
+        <th>Amount Won</th>
+        <th>VRF File</th>
+        <th>Transaction ID</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td colspan="6">Loading winners...</td></tr>
+    </tbody>
+  </table>
+
+  <!-- pagination controls -->
+  <div id="pagination" class="pagination"></div>
+</section>
+
+<script>
+async function loadWinners() {
+  try {
+    const res = await fetch('winner.json?_=' + Date.now()); // prevent caching
+    const winners = await res.json();
+    setupPagination(winners);
+  } catch (err) {
+    console.error('Error loading winners:', err);
+    const tableBody = document.querySelector('#winners-table tbody');
+    tableBody.innerHTML = '<tr><td colspan="6">⚠️ Failed to load winners.</td></tr>';
+  }
+}
+
+function setupPagination(winners) {
+  const rowsPerPage = 10;
+  const pageCount = Math.ceil(winners.length / rowsPerPage);
+  let currentPage = 1;
+
+  const pagination = document.getElementById('pagination');
+  const tableBody = document.querySelector('#winners-table tbody');
+
+  function displayPage(page) {
+    tableBody.innerHTML = '';
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const pageData = winners.slice(start, end);
+
+    pageData.forEach(winner => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${winner.pool || '🏮 Unknown Pool'}</td>
+        <td>${winner.wallet || 'N/A'}</td>
+        <td>${winner.amount || '0.0 BNB'}</td>
+        <td><a href="/VRF/${winner.vrf}" class="vrf-link" target="_blank">View VRF</a></td>
+        <td><a href="${winner.tx || '#'}" class="tx-link" target="_blank">Txn Hash</a></td>
+        <td>${winner.date || 'N/A'}</td>
+      `;
+      tableBody.appendChild(row);
+    });
+  }
+
+  function renderPagination() {
+    pagination.innerHTML = '';
+    for (let i = 1; i <= pageCount; i++) {
+      const button = document.createElement('button');
+      button.textContent = i;
+      button.className = i === currentPage ? 'active' : '';
+      button.addEventListener('click', () => {
+        currentPage = i;
+        displayPage(currentPage);
+        renderPagination();
+      });
+      pagination.appendChild(button);
+    }
+  }
+
+  displayPage(currentPage);
+  renderPagination();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadWinners();
+  // Auto-refresh every 60 seconds
+  setInterval(loadWinners, 60000);
+});
+</script>
+
+
+  <!-- === FOOTER === -->
+  <footer>
+    <p>© 2025 Dynasty Jackpot — Built on BNB Chain</p>
+    <div class="disclaimer">
+      <p><strong>免责声明 DISCLAIMER</strong></p>
+      <p>这不是彩票或国家附属游戏。仅供娱乐。请查看您当地的法律。</p>
+      <p>Not a lottery or state-affiliated game. Entertainment only. Please check your local laws.</p>
+      <p>⚠️ 加密货币涉及风险 | Cryptocurrency involves risk</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

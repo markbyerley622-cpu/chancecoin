@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🐉 CHANCE COIN | Opportunity</title>
+  <link rel="stylesheet" href="style.css" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500&display=swap" rel="stylesheet">
+<!-- Add to your HTML <head> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>   
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+</head>
+<body>
+<header class="top-header">
+  <div class="logo">
+    🏯 <span>CHANCE COIN</span>
+  </div>
+
+  <!-- 🪙 Global Contract Address -->
+  <div id="contract-address" class="contract-address">
+    0x64c64beacec8c1ebfce034d8fa4bcbc6885e4444
+  </div>
+
+<button id="menu-toggle" class="menu-toggle" aria-label="Toggle Menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+
+
+
+  <!-- === Navigation Bar === -->
+  <nav class="nav">
+    <a href="faq.html" class="nav-link highlight">❓ FAQ</a>
+    <a 
+      href="https://x.com/i/communities/1979291401788457021" 
+      target="_blank" 
+      rel="noopener noreferrer" 
+      class="nav-link"
+    >
+      🐦 Follow X
+    </a>
+  </nav>
+</header>
+
+
+
+  <main>
+
+<div class="instructions">
+  <h2>How to Play</h2>
+  <ol>
+    <li><span>Connect your wallet</span> — link your wallet to get started.</li>
+    <li><span>Choose your stake</span> — pick how much BNB you want to play with.</li>
+    <li><span>Join a game</span> — lock in your wager and wait for a match.</li>
+    <li><span>Pick Heads or Tails</span> — make your call and test your luck.</li>
+    <li><span>Wait for an opponent</span> — someone with the same stake and the opposite pick will join automatically.</li>
+    <li><span>Win!</span> — the smart contract flips the coin and sends the prize to the winner.</li>
+  </ol>
+</div>
+
+
+
+
+<!-- 🪙 Coin Flip -->
+<div class="coin-container">
+  <div class="coin" id="coin">
+    <div class="side heads">
+      <div class="coin-inner">
+        <div class="coin-symbol gold-clover"></div>
+        <div class="coin-text">HEADS</div>
+      </div>
+    </div>
+    <div class="side tails">
+      <div class="coin-inner">
+        <div class="coin-symbol gold-clover"></div>
+        <div class="coin-text">TAILS</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+<div>
+  <label>Stake:
+    <select id="stake">
+      <option value="0.01">0.01 BNB</option>
+      <option value="0.05">0.05 BNB</option>
+      <option value="0.1">0.1 BNB</option>
+      <option value="0.5">0.5 BNB</option>
+      <option value="1">1 BNB</option>
+      <option value="5">5 BNB</option>
+    </select>
+  </label>
+</div>
+
+<!-- 🔹 Join Game -->
+<div>
+  <button id="joinGameBtn">Join Game</button>
+</div>
+
+<!-- 🎯 Heads/Tails -->
+<div>
+  <button id="headsBtn" disabled>Pick Heads</button>
+  <button id="tailsBtn" disabled>Pick Tails</button>
+</div>
+
+<div id="confetti-container"></div>
+<div id="loser-cross"></div>
+
+
+   <div class="wallet-connect">
+  <button id="connectMetaMask" class="wallet-btn">
+    <img src="metamask.png" alt="MetaMask" class="wallet-logo" />
+    Connect MetaMask
+  </button>
+
+  <button id="connectPhantom" class="wallet-btn">
+    <img src="phantom.png" alt="Phantom" class="wallet-logo" />
+    Connect Phantom
+  </button>
+
+  <div id="walletStatus">
+    <span id="addr"></span>
+  </div>
+</div>
+
+
+
+
+    <section id="activity">
+      <h2>Recent Matches</h2>
+      <ul id="recentList"></ul>
+    </section>
+  </main>
+
+  <footer>
+  <p>© 2025 CHANCE COIN — Built on BNB Chain</p>
+  <div class="disclaimer">
+    <p><strong>免责声明 DISCLAIMER</strong></p>
+    <p>这不是彩票或国家附属游戏。仅供娱乐。请查看您当地的法律。</p>
+    <p>Not a lottery or state-affiliated game. Entertainment only. VERIFIED BY VRF</p>
+    <p>加密货币涉及风险 | </p>
+  </div>
+</footer>
+
+
+
+  <script src="script.js"></script>
+</body>
+</html>
