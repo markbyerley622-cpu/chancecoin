@@ -34,6 +34,7 @@ let isConnected = false;
 const LOBBY_MAX = 100;
 const MATCHES_MAX = 50;
 const MATCHES_FILE = path.join(__dirname, "public/recent-winners.json");
+const CHAT_REFRESH_INTERVAL = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 let lobby = [];
 let recentMatches = [];
@@ -204,6 +205,15 @@ function getLobbyPlayersList() {
   }));
 }
 
+// Clear chat history every 30 minutes
+function setupChatRefresh() {
+  setInterval(() => {
+    console.log('🧹 Clearing chat history (30-minute refresh)');
+    chatHistory = [];
+    io.emit('chatHistoryCleared');
+  }, CHAT_REFRESH_INTERVAL);
+}
+
 // === Socket.IO Connection Handler ===
 io.on("connection", (socket) => {
   console.log("✅ New client connected:", socket.id);
@@ -274,7 +284,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Handle chat messages
+  // Handle chat messages - use socket.broadcast instead of io.emit
   socket.on('chatMessage', (data) => {
     const sanitizedMessage = sanitizeMessage(data.message);
     const sanitizedUsername = sanitizeUsername(data.username);
@@ -295,8 +305,11 @@ io.on("connection", (socket) => {
       chatHistory.shift();
     }
     
-    // Broadcast to all clients
-    io.emit('chatMessage', chatMsg);
+    // Broadcast to all clients EXCEPT sender
+    socket.broadcast.emit('chatMessage', chatMsg);
+    
+    // Send back to sender with confirmation
+    socket.emit('chatMessage', { ...chatMsg, confirmed: true });
   });
 
   // === DISCONNECT HANDLER ===
@@ -335,7 +348,9 @@ server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`🌐 Network: BSC Mainnet`);
   console.log(`💬 Lobby chat enabled`);
+  console.log(`🧹 Chat history refreshes every 30 minutes`);
   initBlockchain();
+  setupChatRefresh();
 });
 
 // Graceful shutdown

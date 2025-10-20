@@ -75,6 +75,13 @@ socket.on('chatMessage', (data) => {
   addMessage(data);
 });
 
+// Chat history cleared event
+socket.on('chatHistoryCleared', () => {
+  console.log('Chat history cleared by server');
+  chatMessages.innerHTML = '';
+  addSystemMessage('💨 Chat history refreshed');
+});
+
 // User joined notification
 socket.on('userJoined', (data) => {
   console.log('User joined:', data.username);
