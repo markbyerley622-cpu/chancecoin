@@ -1,7 +1,8 @@
 // lobby.js - Real-time lobby chat and player list
 
 // Initialize Socket.io connection
-const socket = io('https://chancecoin.fun'); // Change to your production URL when deploying
+const socket = io('https://sixfigs.onrender.com');
+ // Change to your production URL when deploying
 
 // DOM elements
 const chatMessages = document.getElementById('chatMessages');
