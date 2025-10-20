@@ -150,7 +150,7 @@ window.provider = null;
 window.signer = null;
 window.userAddress = null;
 
-const CHANCE_CONTRACT_ADDRESS = "0x5becffdd41ab85bf5687e0b4e6de1175a7fd9eb8";
+const CHANCE_CONTRACT_ADDRESS = "0x5BecFfDd41ab85Bf5687e0B4e6DE1175A7fD9EB8";
 const chanceAbi = [
   "function joinGame(uint8 side) external payable",
   "function isAllowedStake(uint256) view returns (bool)",
@@ -163,6 +163,170 @@ const chanceAbi = [
   "function feePercentage() view returns (uint256)",
   "function getAllowedStakes() view returns (uint256[])"
 ];
+
+// Sound effects system
+const sounds = {
+  coinSpin: null,
+  win: null,
+  lose: null,
+  click: null,
+  gong: null
+};
+
+// Initialize sounds
+function initSounds() {
+  // Create Audio Context for better control
+  try {
+    // Coin spinning sound (metallic spinning)
+    sounds.coinSpin = new Audio();
+    sounds.coinSpin.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFgYF8eXt8eXl4e3t8eXl8eXt8e3x8eXl4eHt8eXl8eXt8eXl8eXt8eXl8eXt8eXl8eXt8eXl8eXt8eXl8eXt8eXl8eXt8eXl8eXt8eXl8eXt8eXl8eXt8eXl8eXt8eXl8eXt8eXl8eXt8eXl8eXt8';
+    sounds.coinSpin.loop = true;
+    sounds.coinSpin.volume = 0.4;
+
+    // Chinese gong sound (using oscillator)
+    sounds.gong = createGongSound();
+    
+    // Win sound (triumphant)
+    sounds.win = createWinSound();
+    
+    // Lose sound (descending)
+    sounds.lose = createLoseSound();
+    
+    // Click sound
+    sounds.click = createClickSound();
+  } catch (err) {
+    console.log("Audio not supported:", err);
+  }
+}
+
+// Create gong sound using Web Audio API
+function createGongSound() {
+  return function() {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 150;
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 2);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 2);
+    } catch(e) {
+      console.log("Gong sound failed:", e);
+    }
+  };
+}
+
+// Create win sound
+function createWinSound() {
+  return function() {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+      oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+      oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+      
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    } catch(e) {
+      console.log("Win sound failed:", e);
+    }
+  };
+}
+
+// Create lose sound
+function createLoseSound() {
+  return function() {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.5);
+      
+      oscillator.type = 'sawtooth';
+      gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    } catch(e) {
+      console.log("Lose sound failed:", e);
+    }
+  };
+}
+
+// Create click sound
+function createClickSound() {
+  return function() {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.1);
+    } catch(e) {
+      console.log("Click sound failed:", e);
+    }
+  };
+}
+
+function playSound(soundName) {
+  try {
+    if (sounds[soundName]) {
+      if (typeof sounds[soundName] === 'function') {
+        sounds[soundName]();
+      } else {
+        sounds[soundName].currentTime = 0;
+        sounds[soundName].play();
+      }
+    }
+  } catch(e) {
+    console.log("Sound playback failed:", e);
+  }
+}
+
+function stopSound(soundName) {
+  try {
+    if (sounds[soundName] && typeof sounds[soundName] !== 'function') {
+      sounds[soundName].pause();
+      sounds[soundName].currentTime = 0;
+    }
+  } catch(e) {
+    console.log("Sound stop failed:", e);
+  }
+}
 
 // Custom notification system
 function showNotification(message, type = 'info') {
@@ -180,7 +344,6 @@ function showNotification(message, type = 'info') {
   const closeBtn = notif.querySelector('.notification-close');
   closeBtn.addEventListener('click', () => notif.remove());
   
-  // Auto remove after 5 seconds
   setTimeout(() => {
     if (notif.parentNode) notif.remove();
   }, 5000);
@@ -189,6 +352,8 @@ function showNotification(message, type = 'info') {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  initSounds(); // Initialize sound system
+  
   const socket = io();
 
   const stakeSelect = document.getElementById("stake");
@@ -207,6 +372,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let spinTimeout = null;
 
   connectMetaMaskBtn.onclick = async () => {
+    playSound('click');
     if (window.ethereum) {
       try {
         window.provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -216,8 +382,8 @@ document.addEventListener("DOMContentLoaded", () => {
         addrSpan.innerText = `✅ MetaMask: ${window.userAddress}`;
 
         const network = await window.provider.getNetwork();
-        if (network.chainId !== 97) {
-          showNotification("Please switch to BSC Testnet", 'error');
+        if (network.chainId !== 56) {
+          showNotification("Please switch to BSC Mainnet", 'error');
           return;
         }
 
@@ -225,6 +391,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const stakes = await chance.getAllowedStakes();
         const stakesFormatted = stakes.map(s => ethers.utils.formatEther(s));
         
+        playSound('gong');
         showNotification(`Connected! Allowed stakes: ${stakesFormatted.join(', ')} BNB`, 'success');
       } catch (err) {
         console.error(err);
@@ -237,7 +404,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function startSpinning() {
     spinning = true;
+    coin.classList.remove('flip-heads', 'flip-tails');
     coin.classList.add('flip-spinning');
+    playSound('coinSpin');
+    
     if (spinTimeout) clearTimeout(spinTimeout);
     spinTimeout = setTimeout(() => {
       spinning = false;
@@ -247,11 +417,22 @@ document.addEventListener("DOMContentLoaded", () => {
   function flipCoin(result) {
     spinning = false;
     if (spinTimeout) clearTimeout(spinTimeout);
-    coin.classList.remove('flip-spinning', 'flip-heads', 'flip-tails');
-    coin.classList.add(result === "heads" ? 'flip-heads' : 'flip-tails');
+    
+    // Gradually slow down the spin
+    coin.classList.remove('flip-spinning');
+    coin.classList.add('flip-slowing');
+    
+    stopSound('coinSpin');
+    
+    setTimeout(() => {
+      coin.classList.remove('flip-slowing', 'flip-heads', 'flip-tails');
+      coin.classList.add(result === "heads" ? 'flip-heads' : 'flip-tails');
+      playSound('gong'); // Sound when coin lands
+    }, 800);
   }
 
   function triggerConfetti() {
+    playSound('win');
     const container = document.getElementById('confetti-container');
     for (let i = 0; i < 50; i++) {
       const confetti = document.createElement('div');
@@ -267,6 +448,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function triggerLoserX() {
+    playSound('lose');
     const loserCross = document.getElementById('loser-cross');
     loserCross.style.animation = 'none';
     void loserCross.offsetWidth;
@@ -282,6 +464,7 @@ document.addEventListener("DOMContentLoaded", () => {
   tailsBtn.disabled = true;
   
   joinGameBtn.addEventListener('click', () => {
+    playSound('click');
     if (!window.signer) {
       showNotification("Connect wallet first", 'error');
       return;
@@ -300,8 +483,15 @@ document.addEventListener("DOMContentLoaded", () => {
     startSpinning();
   });
 
- headsBtn.onclick = () => pickSide(2);
-  tailsBtn.onclick = () => pickSide(1);
+  headsBtn.onclick = () => {
+    playSound('click');
+    pickSide(2);
+  };
+  
+  tailsBtn.onclick = () => {
+    playSound('click');
+    pickSide(1);
+  };
 
   async function pickSide(side) {
     if (!window.signer) {
@@ -340,67 +530,68 @@ document.addEventListener("DOMContentLoaded", () => {
         side: userSide 
       });
 
+      socket.once("matchResult", (data) => {
+        console.log("Match result data received:", data);
 
-socket.once("matchResult", (data) => {
-  console.log("Match result data received:", data);
+        spinning = false;
+        const userWon = data.winner.toLowerCase() === window.userAddress.toLowerCase();
+        
+        // Show the side that WON based on user's pick
+        // If user won, show their side. If lost, show opposite side
+        const winningSide = userWon ? userSide : (userSide === 1 ? 2 : 1);
+        const result = winningSide === 2 ? "heads" : "tails";
+        
+        console.log("User side:", userSide, "User won:", userWon, "Showing:", result);
+        flipCoin(result);
 
-  spinning = false;
-  const result = data.result;
-  flipCoin(result);
+        const winAmount = ethers.utils.formatEther(data.amount);
+        const opponent = data.opponent || "Unknown";
 
-  const userWon = data.winner.toLowerCase() === window.userAddress.toLowerCase();
-  const winAmount = ethers.utils.formatEther(data.amount);
-  const opponent = data.opponent || "Unknown";
+        setTimeout(() => {
+          if (userWon) {
+            showNotification(
+              `🎉 You won ${winAmount} BNB against ${opponent.slice(0, 6)}...${opponent.slice(-4)}`,
+              "success"
+            );
+            triggerConfetti();
+          } else {
+            showNotification(
+              `❌ You lost against ${opponent.slice(0, 6)}...${opponent.slice(-4)}`,
+              "error"
+            );
+            triggerLoserX();
+          }
+        }, 1000);
 
-  if (userWon) {
-    showNotification(
-      `🎉 You won ${winAmount} BNB against ${opponent.slice(0, 6)}...${opponent.slice(-4)}`,
-      "success"
-    );
-    triggerConfetti();
-  } else {
-    showNotification(
-      `❌ You lost against ${opponent.slice(0, 6)}...${opponent.slice(-4)}`,
-      "error"
-    );
-    triggerLoserX();
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <div class="match-entry ${userWon ? "win" : "loss"}">
+            <span class="match-status">${userWon ? "✅ WIN" : "❌ LOSS"}</span>
+            <span class="match-opponent">vs ${opponent}</span>
+            <span class="match-stake">${winAmount} BNB</span>
+          </div>
+        `;
+        recentList.prepend(li);
+
+        while (recentList.children.length > 10) {
+          recentList.removeChild(recentList.lastChild);
+        }
+
+        joinGameBtn.disabled = false;
+        userSide = null;
+        selectedStake = null;
+      });
+
+    } catch (err) {
+      spinning = false;
+      stopSound('coinSpin');
+      headsBtn.disabled = false;
+      tailsBtn.disabled = false;
+      joinGameBtn.disabled = false;
+      console.error("Error:", err);
+      showNotification("Error: " + (err.message || "Unknown error"), 'error');
+      userSide = null;
+      selectedStake = null;
+    }
   }
-
-  // === Update Recent Matches UI ===
-  const li = document.createElement("li");
-  li.innerHTML = `
-    <div class="match-entry ${userWon ? "win" : "loss"}">
-      <span class="match-status">${userWon ? "✅ WIN" : "❌ LOSS"}</span>
-<span class="match-opponent">vs ${opponent}</span>
-      <span class="match-stake">${winAmount} BNB</span>
-    </div>
-  `;
-  recentList.prepend(li);
-
-  // Keep only the latest 10
-  while (recentList.children.length > 10) {
-    recentList.removeChild(recentList.lastChild);
-  }
-
-  // Reset state
-  joinGameBtn.disabled = false;
-  userSide = null;
-  selectedStake = null;
 });
-
-// <-- make sure you still have this from earlier in your code:
-} catch (err) {
-  spinning = false;
-  headsBtn.disabled = false;
-  tailsBtn.disabled = false;
-  joinGameBtn.disabled = false;
-  console.error("Error:", err);
-  showNotification("Error: " + (err.message || "Unknown error"), 'error');
-  userSide = null;
-  selectedStake = null;
-}
-} // closes pickSide function
-
-}); // closes DOMContentLoaded
-
-
