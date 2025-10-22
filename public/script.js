@@ -356,6 +356,20 @@ document.addEventListener("DOMContentLoaded", () => {
   let userSide = null;
   let selectedStake = null;
   let spinTimeout = null;
+  let matchResultHandler = null; // Store the handler reference
+
+  // Socket connection status
+  socket.on('connect', () => {
+    console.log('✅ Socket connected:', socket.id);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('❌ Socket disconnected');
+  });
+
+  socket.on('connect_error', (error) => {
+    console.error('🔴 Socket connection error:', error);
+  });
 
   connectMetaMaskBtn.onclick = async () => {
     playSound('click');
@@ -365,7 +379,7 @@ document.addEventListener("DOMContentLoaded", () => {
         await window.provider.send("eth_requestAccounts", []);
         window.signer = window.provider.getSigner();
         window.userAddress = await window.signer.getAddress();
-        addrSpan.innerText = `✅ MetaMask: ${window.userAddress}`;
+        addrSpan.innerText = `✅ MetaMask: ${window.userAddress.slice(0, 6)}...${window.userAddress.slice(-4)}`;
 
         const network = await window.provider.getNetwork();
         if (network.chainId !== 56) {
@@ -430,6 +444,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function triggerConfetti() {
     playSound('win');
     const container = document.getElementById('confetti-container');
+    if (!container) return;
+    
     for (let i = 0; i < 50; i++) {
       const confetti = document.createElement('div');
       confetti.classList.add('confetti');
@@ -446,6 +462,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function triggerLoserX() {
     playSound('lose');
     const loserCross = document.getElementById('loser-cross');
+    if (!loserCross) return;
+    
     loserCross.style.animation = 'none';
     void loserCross.offsetWidth;
     loserCross.style.animation = 'pop 0.6s ease-out forwards';
@@ -489,6 +507,74 @@ document.addEventListener("DOMContentLoaded", () => {
     pickSide(1); // Tails = 1
   };
 
+  // Setup match result listener OUTSIDE of pickSide function
+  // This ensures it persists and is ready to receive events
+  socket.on("matchResult", (data) => {
+    console.log("📩 Match result received:", data);
+    
+    if (!window.userAddress) {
+      console.log("⚠️ No user address set, ignoring result");
+      return;
+    }
+
+    console.log(`   Winner: ${data.winner}`);
+    console.log(`   Your address: ${window.userAddress}`);
+    console.log(`   Your side: ${userSide === 1 ? 'TAILS' : 'HEADS'}`);
+
+    const userWon = data.winner.toLowerCase() === window.userAddress.toLowerCase();
+    console.log(`   You ${userWon ? 'WON' : 'LOST'}`);
+    
+    // Determine what side the coin should show
+    const coinResult = userWon ? 
+      (userSide === 2 ? "heads" : "tails") : 
+      (userSide === 2 ? "tails" : "heads");
+    
+    console.log(`   Coin will show: ${coinResult}`);
+    
+    // Stop spinning and show result
+    stopSpinning(coinResult, userWon);
+
+    const winAmount = ethers.utils.formatEther(data.amount);
+    const opponent = data.opponent || "Unknown";
+
+    // Show notification after coin settles
+    setTimeout(() => {
+      if (userWon) {
+        showNotification(
+          `🎉 You won ${winAmount} BNB against ${opponent.slice(0, 6)}...${opponent.slice(-4)}`,
+          "success"
+        );
+      } else {
+        showNotification(
+          `❌ You lost against ${opponent.slice(0, 6)}...${opponent.slice(-4)}`,
+          "error"
+        );
+      }
+    }, 1500);
+
+    // Add to recent matches
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <div class="match-entry ${userWon ? "win" : "loss"}">
+        <span class="match-status">${userWon ? "✅ WIN" : "❌ LOSS"}</span>
+        <span class="match-opponent">vs ${opponent.slice(0, 6)}...${opponent.slice(-4)}</span>
+        <span class="match-stake">${winAmount} BNB</span>
+      </div>
+    `;
+    recentList.prepend(li);
+
+    while (recentList.children.length > 10) {
+      recentList.removeChild(recentList.lastChild);
+    }
+
+    // Re-enable UI
+    joinGameBtn.disabled = false;
+    headsBtn.disabled = true;
+    tailsBtn.disabled = true;
+    userSide = null;
+    selectedStake = null;
+  });
+
   async function pickSide(side) {
     if (!window.signer) {
       showNotification("Connect wallet first", 'error');
@@ -504,10 +590,12 @@ document.addEventListener("DOMContentLoaded", () => {
     headsBtn.disabled = true;
     tailsBtn.disabled = true;
     
-    console.log(`🎯 User picked side: ${side === 1 ? 'TAILS' : 'HEADS'}`);
+    console.log(`🎯 User picked side: ${side === 1 ? 'TAILS' : 'HEADS'} (value: ${side})`);
     
     try {
       const stakeWei = ethers.utils.parseEther(selectedStake);
+      console.log(`💰 Stake in Wei: ${stakeWei.toString()}`);
+      
       const chance = new ethers.Contract(CHANCE_CONTRACT_ADDRESS, chanceAbi, window.signer);
       const isAllowed = await chance.isAllowedStake(stakeWei);
       
@@ -517,6 +605,8 @@ document.addEventListener("DOMContentLoaded", () => {
       
       showNotification("Joining game... Please confirm in MetaMask", 'info');
       const tx = await chance.joinGame(userSide, { value: stakeWei });
+      console.log(`📤 Transaction sent: ${tx.hash}`);
+      
       showNotification("Waiting for confirmation...", 'info');
       const receipt = await tx.wait();
       
@@ -524,76 +614,17 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error("Transaction failed");
       }
       
-      console.log("Transaction confirmed:", receipt.transactionHash);
+      console.log("✅ Transaction confirmed:", receipt.transactionHash);
       showNotification("Successfully joined! Waiting for opponent...", 'success');
       
+      // Emit to server that player joined
       socket.emit("playerJoined", { 
         addr: window.userAddress, 
         stake: selectedStake, 
         side: userSide 
       });
-
-      // Listen for match result
-      socket.once("matchResult", (data) => {
-        console.log("📩 Match result received:", data);
-        console.log(`   Winner: ${data.winner}`);
-        console.log(`   Your address: ${window.userAddress}`);
-        console.log(`   Your side: ${userSide === 1 ? 'TAILS' : 'HEADS'}`);
-
-        const userWon = data.winner.toLowerCase() === window.userAddress.toLowerCase();
-        console.log(`   You ${userWon ? 'WON' : 'LOST'}`);
-        
-        // Determine what side the coin should show
-        // The coin shows the ACTUAL result, not what you picked
-        // If you picked HEADS (2) and won, coin shows HEADS
-        // If you picked HEADS (2) and lost, coin shows TAILS
-        const coinResult = userWon ? 
-          (userSide === 2 ? "heads" : "tails") : 
-          (userSide === 2 ? "tails" : "heads");
-        
-        console.log(`   Coin will show: ${coinResult}`);
-        
-        // Stop spinning and show result
-        stopSpinning(coinResult, userWon);
-
-        const winAmount = ethers.utils.formatEther(data.amount);
-        const opponent = data.opponent || "Unknown";
-
-        // Show notification after coin settles
-        setTimeout(() => {
-          if (userWon) {
-            showNotification(
-              `🎉 You won ${winAmount} BNB against ${opponent.slice(0, 6)}...${opponent.slice(-4)}`,
-              "success"
-            );
-          } else {
-            showNotification(
-              `❌ You lost against ${opponent.slice(0, 6)}...${opponent.slice(-4)}`,
-              "error"
-            );
-          }
-        }, 1500);
-
-        // Add to recent matches
-        const li = document.createElement("li");
-        li.innerHTML = `
-          <div class="match-entry ${userWon ? "win" : "loss"}">
-            <span class="match-status">${userWon ? "✅ WIN" : "❌ LOSS"}</span>
-            <span class="match-opponent">vs ${opponent}</span>
-            <span class="match-stake">${winAmount} BNB</span>
-          </div>
-        `;
-        recentList.prepend(li);
-
-        while (recentList.children.length > 10) {
-          recentList.removeChild(recentList.lastChild);
-        }
-
-        // Re-enable UI
-        joinGameBtn.disabled = false;
-        userSide = null;
-        selectedStake = null;
-      });
+      
+      console.log(`📡 Emitted playerJoined to server`);
 
     } catch (err) {
       console.error("❌ Error:", err);
