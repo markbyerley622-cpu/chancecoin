@@ -150,11 +150,10 @@ window.provider = null;
 window.signer = null;
 window.userAddress = null;
 
-const CHANCE_CONTRACT_ADDRESS = "0x5BecFfDd41ab85Bf5687e0B4e6DE1175A7fD9EB8";
+const CHANCE_CONTRACT_ADDRESS = "0xc46c08b452bc29110a8d96f39e7f05230ca08e03";
 const chanceAbi = [
   "function joinGame(uint8 side) external payable",
   "function isAllowedStake(uint256) view returns (bool)",
-  "function allowedStakes(uint256) view returns (uint256)",
   "function cancelQueue(uint256 stake, uint8 side) external",
   "event MatchSettled(uint256 indexed matchId, address winner, uint256 amount)",
   "event PlayerQueued(address indexed player, uint256 stake, uint8 side)",
@@ -356,7 +355,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let userSide = null;
   let selectedStake = null;
   let spinTimeout = null;
-  let matchResultHandler = null; // Store the handler reference
 
   // Socket connection status
   socket.on('connect', () => {
@@ -444,8 +442,12 @@ document.addEventListener("DOMContentLoaded", () => {
   function triggerConfetti() {
     playSound('win');
     const container = document.getElementById('confetti-container');
-    if (!container) return;
+    if (!container) {
+      console.warn('⚠️ Confetti container not found in DOM');
+      return;
+    }
     
+    console.log('🎉 Triggering confetti!');
     for (let i = 0; i < 50; i++) {
       const confetti = document.createElement('div');
       confetti.classList.add('confetti');
@@ -462,8 +464,12 @@ document.addEventListener("DOMContentLoaded", () => {
   function triggerLoserX() {
     playSound('lose');
     const loserCross = document.getElementById('loser-cross');
-    if (!loserCross) return;
+    if (!loserCross) {
+      console.warn('⚠️ Loser cross element not found in DOM');
+      return;
+    }
     
+    console.log('❌ Triggering loser X!');
     loserCross.style.animation = 'none';
     void loserCross.offsetWidth;
     loserCross.style.animation = 'pop 0.6s ease-out forwards';
@@ -508,9 +514,8 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // Setup match result listener OUTSIDE of pickSide function
-  // This ensures it persists and is ready to receive events
   socket.on("matchResult", (data) => {
-    console.log("📩 Match result received:", data);
+    console.log("\n📩 Match result received:", data);
     
     if (!window.userAddress) {
       console.log("⚠️ No user address set, ignoring result");
@@ -519,17 +524,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log(`   Winner: ${data.winner}`);
     console.log(`   Your address: ${window.userAddress}`);
-    console.log(`   Your side: ${userSide === 1 ? 'TAILS' : 'HEADS'}`);
+    console.log(`   Your side: ${userSide === 1 ? 'TAILS' : 'HEADS'} (${userSide})`);
 
     const userWon = data.winner.toLowerCase() === window.userAddress.toLowerCase();
-    console.log(`   You ${userWon ? 'WON' : 'LOST'}`);
+    console.log(`   Result: You ${userWon ? 'WON! 🎉' : 'LOST 😢'}`);
     
     // Determine what side the coin should show
     const coinResult = userWon ? 
       (userSide === 2 ? "heads" : "tails") : 
       (userSide === 2 ? "tails" : "heads");
     
-    console.log(`   Coin will show: ${coinResult}`);
+    console.log(`   Coin will show: ${coinResult.toUpperCase()}`);
     
     // Stop spinning and show result
     stopSpinning(coinResult, userWon);
@@ -575,6 +580,7 @@ document.addEventListener("DOMContentLoaded", () => {
     selectedStake = null;
   });
 
+  // CORRECTED: Native BNB version of pickSide
   async function pickSide(side) {
     if (!window.signer) {
       showNotification("Connect wallet first", 'error');
@@ -590,21 +596,33 @@ document.addEventListener("DOMContentLoaded", () => {
     headsBtn.disabled = true;
     tailsBtn.disabled = true;
     
-    console.log(`🎯 User picked side: ${side === 1 ? 'TAILS' : 'HEADS'} (value: ${side})`);
+    console.log(`\n🎯 User picked side: ${side === 1 ? 'TAILS' : 'HEADS'} (value: ${side})`);
     
     try {
       const stakeWei = ethers.utils.parseEther(selectedStake);
-      console.log(`💰 Stake in Wei: ${stakeWei.toString()}`);
+      console.log(`💰 Stake: ${selectedStake} BNB (${stakeWei.toString()} Wei)`);
       
       const chance = new ethers.Contract(CHANCE_CONTRACT_ADDRESS, chanceAbi, window.signer);
-      const isAllowed = await chance.isAllowedStake(stakeWei);
       
+      // Check if stake is allowed
+      const isAllowed = await chance.isAllowedStake(stakeWei);
       if (!isAllowed) {
         throw new Error(`Stake ${selectedStake} BNB is not allowed`);
       }
       
+      console.log(`✅ Stake is allowed`);
+      
+      // Check user's BNB balance
+      const balance = await window.provider.getBalance(window.userAddress);
+      console.log(`💼 Your BNB balance: ${ethers.utils.formatEther(balance)}`);
+      
+      if (balance.lt(stakeWei)) {
+        throw new Error(`Insufficient BNB. You have ${ethers.utils.formatEther(balance)} but need ${selectedStake}`);
+      }
+      
+      // Call joinGame with side and BNB value
       showNotification("Joining game... Please confirm in MetaMask", 'info');
-      const tx = await chance.joinGame(userSide, { value: stakeWei });
+      const tx = await chance.joinGame(side, { value: stakeWei });
       console.log(`📤 Transaction sent: ${tx.hash}`);
       
       showNotification("Waiting for confirmation...", 'info');
@@ -617,7 +635,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("✅ Transaction confirmed:", receipt.transactionHash);
       showNotification("Successfully joined! Waiting for opponent...", 'success');
       
-      // Emit to server that player joined
+      // Emit to server
       socket.emit("playerJoined", { 
         addr: window.userAddress, 
         stake: selectedStake, 

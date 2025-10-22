@@ -34,15 +34,15 @@ let isConnected = false;
 const LOBBY_MAX = 100;
 const MATCHES_MAX = 50;
 const MATCHES_FILE = path.join(__dirname, "public/recent-winners.json");
-const CHAT_REFRESH_INTERVAL = 30 * 60 * 1000; // 30 minutes in milliseconds
+const CHAT_REFRESH_INTERVAL = 30 * 60 * 1000;
 
 let lobby = [];
 let recentMatches = [];
-let connectedPlayers = {}; // address => socketId
-let pendingMatches = {}; // matchId => {p1, p2, p1Side, p2Side}
+let connectedPlayers = {}; // address => {socketId, side}
+let pendingMatches = {}; // matchId => {p1, p2, p1Side, p2Side, stake}
 
 // === LOBBY CHAT DATA ===
-let lobbyPlayers = new Map(); // socketId => {id, username, connectedAt}
+let lobbyPlayers = new Map();
 const CHAT_HISTORY_LIMIT = 100;
 let chatHistory = [];
 
@@ -63,7 +63,6 @@ async function initBlockchain() {
     console.log("🔗 Connecting to BSC Mainnet...");
     provider = new ethers.providers.JsonRpcProvider(PROVIDER_URL);
     
-    // Test connection
     const network = await provider.getNetwork();
     console.log(`✅ Connected to network: ${network.name} (chainId: ${network.chainId})`);
     
@@ -82,13 +81,34 @@ async function initBlockchain() {
 function setupEventListeners() {
   if (!contract) return;
 
+  // Listen for PlayerQueued events
+  contract.on("PlayerQueued", (player, stake, side, event) => {
+    console.log(`⏳ PlayerQueued: ${player}, stake: ${ethers.utils.formatEther(stake)} BNB, side: ${side === 1 ? 'TAILS' : 'HEADS'} (${side})`);
+  });
+
   // Listen for MatchCreated events
-  contract.on("MatchCreated", (matchId, p1, p2, stake, event) => {
-    console.log(`🎮 MatchCreated: Match #${matchId}, ${p1} vs ${p2}, stake: ${ethers.utils.formatEther(stake)} BNB`);
+  contract.on("MatchCreated", async (matchId, p1, p2, stake, event) => {
+    console.log(`\n🎮 MatchCreated Event:`);
+    console.log(`   Match ID: ${matchId}`);
+    console.log(`   Player 1: ${p1}`);
+    console.log(`   Player 2: ${p2}`);
+    console.log(`   Stake: ${ethers.utils.formatEther(stake)} BNB`);
+    
+    // Get player sides from connectedPlayers
+    const p1Data = connectedPlayers[p1.toLowerCase()];
+    const p2Data = connectedPlayers[p2.toLowerCase()];
+    
+    const p1Side = p1Data ? p1Data.side : null;
+    const p2Side = p2Data ? p2Data.side : null;
+    
+    console.log(`   P1 Side: ${p1Side === 1 ? 'TAILS' : p1Side === 2 ? 'HEADS' : 'UNKNOWN'} (${p1Side})`);
+    console.log(`   P2 Side: ${p2Side === 1 ? 'TAILS' : p2Side === 2 ? 'HEADS' : 'UNKNOWN'} (${p2Side})`);
     
     pendingMatches[matchId.toString()] = {
       p1: p1,
       p2: p2,
+      p1Side: p1Side,
+      p2Side: p2Side,
       stake: stake,
       timestamp: Date.now()
     };
@@ -108,57 +128,79 @@ function setupEventListeners() {
 
   // Listen for MatchSettled events
   contract.on("MatchSettled", async (matchId, winner, amount, event) => {
-    console.log(`🏆 MatchSettled: Match #${matchId}, Winner: ${winner}, Amount: ${ethers.utils.formatEther(amount)} BNB`);
+    console.log(`\n🏆 MatchSettled Event:`);
+    console.log(`   Match ID: ${matchId}`);
+    console.log(`   Winner: ${winner}`);
+    console.log(`   Amount: ${ethers.utils.formatEther(amount)} BNB`);
     
     try {
       const pending = pendingMatches[matchId.toString()];
       
       if (!pending) {
-        console.log("⚠️ No pending match found, will query blockchain");
+        console.log("⚠️ No pending match found in memory");
+        return;
       }
       
-      const p1 = pending ? pending.p1 : null;
-      const p2 = pending ? pending.p2 : null;
+      const p1 = pending.p1;
+      const p2 = pending.p2;
+      const p1Side = pending.p1Side;
+      const p2Side = pending.p2Side;
       
-      const p1Opponent = p2;
-      const p2Opponent = p1;
+      console.log(`   Player 1: ${p1} (side: ${p1Side})`);
+      console.log(`   Player 2: ${p2} (side: ${p2Side})`);
       
-      if (!p1 || !p2) {
-        console.log("⚠️ Missing player info for match", matchId.toString());
-      }
+      const winnerLower = winner.toLowerCase();
+      const p1Lower = p1.toLowerCase();
+      const p2Lower = p2.toLowerCase();
       
-      const player1SocketId = p1 ? connectedPlayers[p1.toLowerCase()] : null;
-      const player2SocketId = p2 ? connectedPlayers[p2.toLowerCase()] : null;
+      console.log(`   Winner is P1: ${winnerLower === p1Lower}`);
+      console.log(`   Winner is P2: ${winnerLower === p2Lower}`);
       
+      // Get socket IDs
+      const p1Data = connectedPlayers[p1Lower];
+      const p2Data = connectedPlayers[p2Lower];
+      
+      const player1SocketId = p1Data ? p1Data.socketId : null;
+      const player2SocketId = p2Data ? p2Data.socketId : null;
+      
+      console.log(`   P1 Socket: ${player1SocketId || 'NOT CONNECTED'}`);
+      console.log(`   P2 Socket: ${player2SocketId || 'NOT CONNECTED'}`);
+      
+      // Send results to both players
       if (player1SocketId) {
-        io.to(player1SocketId).emit("matchResult", {
+        const resultData = {
           winner: winner,
-          opponent: p1Opponent || "Unknown",
+          opponent: p2,
           amount: amount.toString()
-        });
-        console.log(`✅ Sent result to P1 (${p1})`);
+        };
+        console.log(`   📤 Sending to P1:`, resultData);
+        io.to(player1SocketId).emit("matchResult", resultData);
       } else {
-        console.log(`⚠️ P1 not connected via socket`);
+        console.log(`   ⚠️ P1 not connected via socket`);
       }
       
       if (player2SocketId) {
-        io.to(player2SocketId).emit("matchResult", {
+        const resultData = {
           winner: winner,
-          opponent: p2Opponent || "Unknown",
+          opponent: p1,
           amount: amount.toString()
-        });
-        console.log(`✅ Sent result to P2 (${p2})`);
+        };
+        console.log(`   📤 Sending to P2:`, resultData);
+        io.to(player2SocketId).emit("matchResult", resultData);
       } else {
-        console.log(`⚠️ P2 not connected via socket`);
+        console.log(`   ⚠️ P2 not connected via socket`);
       }
       
+      // Save match
       const match = {
         matchId: matchId.toString(),
-        p1: p1 || "Unknown",
-        p2: p2 || "Unknown",
+        p1: p1,
+        p2: p2,
         winner: winner,
         amount: ethers.utils.formatEther(amount),
-        stake: pending ? ethers.utils.formatEther(pending.stake) : "Unknown",
+        stake: ethers.utils.formatEther(pending.stake),
+        p1Side: p1Side,
+        p2Side: p2Side,
         ts: Date.now()
       };
       
@@ -174,14 +216,11 @@ function setupEventListeners() {
       io.emit("recentMatch", match);
       delete pendingMatches[matchId.toString()];
       
+      console.log(`   ✅ Match processing complete\n`);
+      
     } catch (err) {
       console.error("❌ Error processing MatchSettled event:", err);
     }
-  });
-
-  // Listen for PlayerQueued events
-  contract.on("PlayerQueued", (player, stake, side, event) => {
-    console.log(`⏳ PlayerQueued: ${player}, stake: ${ethers.utils.formatEther(stake)} BNB, side: ${side}`);
   });
 
   console.log("✅ Event listeners set up successfully");
@@ -205,7 +244,6 @@ function getLobbyPlayersList() {
   }));
 }
 
-// Clear chat history every 30 minutes
 function setupChatRefresh() {
   setInterval(() => {
     console.log('🧹 Clearing chat history (30-minute refresh)');
@@ -216,19 +254,31 @@ function setupChatRefresh() {
 
 // === Socket.IO Connection Handler ===
 io.on("connection", (socket) => {
-  console.log("✅ New client connected:", socket.id);
+  console.log("\n✅ New client connected:", socket.id);
   
-  // Send existing lobby and match data (for game page)
   socket.emit("lobbyUpdate", lobby);
   recentMatches.forEach(match => socket.emit("recentMatch", match));
 
   // === GAME LOGIC ===
   socket.on("playerJoined", (data) => {
     const { addr, stake, side } = data;
-    console.log(`🎮 Player registered: ${addr}, stake: ${stake}, side: ${side === 1 ? 'TAILS' : 'HEADS'}`);
+    const addrLower = addr.toLowerCase();
     
-    connectedPlayers[addr.toLowerCase()] = socket.id;
-    console.log(`📝 Stored socket for ${addr.toLowerCase()}`);
+    console.log(`\n🎮 playerJoined event received:`);
+    console.log(`   Address: ${addr}`);
+    console.log(`   Stake: ${stake} BNB`);
+    console.log(`   Side: ${side === 1 ? 'TAILS' : 'HEADS'} (${side})`);
+    console.log(`   Socket ID: ${socket.id}`);
+    
+    // Store player info with their side
+    connectedPlayers[addrLower] = {
+      socketId: socket.id,
+      side: side,
+      stake: stake
+    };
+    
+    console.log(`   📝 Stored in connectedPlayers:`, connectedPlayers[addrLower]);
+    console.log(`   Total connected players: ${Object.keys(connectedPlayers).length}`);
     
     lobby.unshift({ ...data, ts: Date.now(), socketId: socket.id });
     if (lobby.length > LOBBY_MAX) lobby.pop();
@@ -236,12 +286,9 @@ io.on("connection", (socket) => {
   });
 
   // === LOBBY CHAT LOGIC ===
-  
-  // User joins lobby chat
   socket.on('joinLobby', (username) => {
     const sanitized = sanitizeUsername(username);
     
-    // Add player to lobby
     lobbyPlayers.set(socket.id, {
       id: socket.id,
       username: sanitized,
@@ -249,23 +296,17 @@ io.on("connection", (socket) => {
     });
     
     console.log(`💬 ${sanitized} joined the lobby (${socket.id})`);
-    console.log(`📊 Total players in lobby: ${lobbyPlayers.size}`);
     
-    // Notify all clients about new player
     io.emit('userJoined', { username: sanitized });
     
-    // Broadcast updated players list to ALL clients
     const playersList = getLobbyPlayersList();
-    console.log(`📤 Broadcasting players list: ${playersList.length} players`);
     io.emit('playersList', playersList);
     
-    // Send recent chat history to the new user
     chatHistory.forEach(msg => {
       socket.emit('chatMessage', msg);
     });
   });
 
-  // Update username
   socket.on('updateUsername', (username) => {
     const sanitized = sanitizeUsername(username);
     if (lobbyPlayers.has(socket.id)) {
@@ -278,13 +319,11 @@ io.on("connection", (socket) => {
       
       console.log(`📝 ${oldUsername} changed name to ${sanitized}`);
       
-      // Broadcast updated players list
       const playersList = getLobbyPlayersList();
       io.emit('playersList', playersList);
     }
   });
 
-  // Handle chat messages - use socket.broadcast instead of io.emit
   socket.on('chatMessage', (data) => {
     const sanitizedMessage = sanitizeMessage(data.message);
     const sanitizedUsername = sanitizeUsername(data.username);
@@ -299,50 +338,39 @@ io.on("connection", (socket) => {
     
     console.log(`💬 [${sanitizedUsername}]: ${sanitizedMessage}`);
     
-    // Store in history
     chatHistory.push(chatMsg);
     if (chatHistory.length > CHAT_HISTORY_LIMIT) {
       chatHistory.shift();
     }
     
-    // Broadcast to all clients EXCEPT sender
     socket.broadcast.emit('chatMessage', chatMsg);
-    
-    // Send back to sender with confirmation
     socket.emit('chatMessage', { ...chatMsg, confirmed: true });
   });
 
   // === DISCONNECT HANDLER ===
   socket.on("disconnect", () => {
-    console.log("❌ Client disconnected:", socket.id);
+    console.log("\n❌ Client disconnected:", socket.id);
     
-    // Clean up from connected players (game)
     for (const addr in connectedPlayers) {
-      if (connectedPlayers[addr] === socket.id) {
+      if (connectedPlayers[addr].socketId === socket.id) {
+        console.log(`   🗑️ Removed ${addr} from connected players`);
         delete connectedPlayers[addr];
-        console.log(`🗑️ Removed ${addr} from connected players`);
       }
     }
     
-    // Clean up from lobby chat
     const player = lobbyPlayers.get(socket.id);
     if (player) {
       lobbyPlayers.delete(socket.id);
-      console.log(`💬 ${player.username} left the lobby`);
-      console.log(`📊 Total players in lobby: ${lobbyPlayers.size}`);
+      console.log(`   💬 ${player.username} left the lobby`);
       
-      // Notify all clients
       io.emit('userLeft', { username: player.username });
       
-      // Broadcast updated players list
       const playersList = getLobbyPlayersList();
-      console.log(`📤 Broadcasting players list after leave: ${playersList.length} players`);
       io.emit('playersList', playersList);
     }
   });
 });
 
-// Start server and initialize blockchain
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
@@ -353,7 +381,6 @@ server.listen(PORT, () => {
   setupChatRefresh();
 });
 
-// Graceful shutdown
 process.on('SIGINT', () => {
   console.log('\n🛑 Shutting down gracefully...');
   if (contract) {

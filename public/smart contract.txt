@@ -2,25 +2,22 @@
 pragma solidity ^0.8.17;
 
 /*
-  ChanceCoinGame.sol
-  - BEP20/ERC20 token staking (approve & transferFrom)
+  ChanceCoinGame - Native BNB Version
+  - Uses native BNB instead of tokens
   - Matchmaking by stake-size and side (HEADS/TAILS)
   - Pseudo-random outcomes for instant results
   - 5% house fee
 */
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract ChanceCoinGame is ReentrancyGuard {
-    IERC20 public token; // BEP20 token
     address public owner;
-    address public feeWallet; // Wallet to receive 5% fee
+    address public feeWallet;
     uint256 public feePercentage = 5; // 5% fee
 
-    enum Side { NONE, HEADS, TAILS } // 0 unused
+    enum Side { NONE, HEADS, TAILS }
 
-    // stake sizes allowed
     uint256[] public allowedStakes;
 
     struct Player {
@@ -33,12 +30,12 @@ contract ChanceCoinGame is ReentrancyGuard {
         uint256 id;
         Player p1;
         Player p2;
-        uint256 stake; // per player
+        uint256 stake;
         bool settled;
     }
 
     uint256 public nextMatchId;
-    mapping(uint256 => Match) public matches; // matchId => Match
+    mapping(uint256 => Match) public matches;
 
     struct QueuedPlayer {
         address addr;
@@ -47,10 +44,8 @@ contract ChanceCoinGame is ReentrancyGuard {
         uint256 timestamp;
     }
 
-    // mapping stake => side => queued player
     mapping(uint256 => mapping(Side => QueuedPlayer)) public singleSlotQueue;
 
-    // events
     event PlayerQueued(address indexed player, uint256 stake, Side side);
     event MatchCreated(uint256 indexed matchId, address p1, address p2, uint256 stake);
     event MatchSettled(uint256 indexed matchId, address winner, uint256 amount);
@@ -61,23 +56,18 @@ contract ChanceCoinGame is ReentrancyGuard {
         _;
     }
 
-    // SIMPLIFIED CONSTRUCTOR
     constructor(
-        address _token,
         uint256[] memory _allowedStakes,
         address _feeWallet
     ) {
-        require(_token != address(0), "invalid token address");
         require(_feeWallet != address(0), "invalid fee wallet");
         
         owner = msg.sender;
-        token = IERC20(_token);
         allowedStakes = _allowedStakes;
         feeWallet = _feeWallet;
         nextMatchId = 1;
     }
 
-    // helper: check stake allowed
     function isAllowedStake(uint256 s) public view returns(bool) {
         for (uint i=0; i<allowedStakes.length; i++) {
             if (allowedStakes[i] == s) return true;
@@ -85,27 +75,21 @@ contract ChanceCoinGame is ReentrancyGuard {
         return false;
     }
 
-    // user calls approve(tokenContract, amount) before calling joinGame
-    function joinGame(uint256 stake, uint8 side_) external nonReentrant {
+    // MODIFIED: Now accepts native BNB
+    function joinGame(uint8 side_) external payable nonReentrant {
+        uint256 stake = msg.value; // Get BNB amount sent
         require(isAllowedStake(stake), "invalid stake");
         require(side_ == uint8(Side.HEADS) || side_ == uint8(Side.TAILS), "invalid side");
         Side side = Side(side_);
 
-        // check opposite queue FIRST before transferring
         Side opposite = (side == Side.HEADS) ? Side.TAILS : Side.HEADS;
         QueuedPlayer memory queued = singleSlotQueue[stake][opposite];
 
         if (queued.addr != address(0)) {
-            // found opponent
-            // Transfer current player's tokens first
-            bool ok = token.transferFrom(msg.sender, address(this), stake);
-            require(ok, "transferFrom failed");
-            
-            // Now we have BOTH players' tokens in the contract
+            // Found opponent
             address p1 = queued.addr;
             address p2 = msg.sender;
 
-            // clear queue slot
             delete singleSlotQueue[stake][opposite];
 
             uint256 matchId = nextMatchId++;
@@ -119,13 +103,10 @@ contract ChanceCoinGame is ReentrancyGuard {
 
             emit MatchCreated(matchId, p1, p2, stake);
 
-            // INSTANTLY SETTLE with pseudo-randomness
+            // Instantly settle
             _settleMatchPseudoRandom(matchId);
         } else {
-            // No opponent yet - transfer tokens and queue this player
-            bool ok = token.transferFrom(msg.sender, address(this), stake);
-            require(ok, "transferFrom failed");
-            
+            // No opponent - queue this player
             singleSlotQueue[stake][side] = QueuedPlayer({
                 addr: msg.sender,
                 stake: stake,
@@ -136,17 +117,15 @@ contract ChanceCoinGame is ReentrancyGuard {
         }
     }
 
-    // Internal function to settle match with pseudo-randomness
     function _settleMatchPseudoRandom(uint256 matchId) internal {
         Match storage m = matches[matchId];
         require(!m.settled, "already settled");
         require(m.p1.addr != address(0), "p1 invalid");
         require(m.p2.addr != address(0), "p2 invalid");
 
-        // Mark as settled FIRST to prevent reentrancy
         m.settled = true;
 
-        // Pseudo-random outcome using block data
+        // Pseudo-random
         uint256 rnd = uint256(keccak256(abi.encodePacked(
             block.timestamp, 
             block.prevrandao, 
@@ -158,28 +137,24 @@ contract ChanceCoinGame is ReentrancyGuard {
         
         uint winnerIndex = rnd % 2;
         address winner = (winnerIndex == 0) ? m.p1.addr : m.p2.addr;
-        uint256 totalPot = m.stake * 2; // Total pot from both players
+        uint256 totalPot = m.stake * 2;
         
-        // Calculate 5% fee
         uint256 fee = (totalPot * feePercentage) / 100;
         uint256 winnerAmount = totalPot - fee;
 
-        // Verify contract has enough balance
-        uint256 contractBalance = token.balanceOf(address(this));
-        require(contractBalance >= totalPot, "insufficient contract balance");
+        require(address(this).balance >= totalPot, "insufficient balance");
         
-        // Transfer winner amount first
-        require(winner != address(0), "invalid winner");
-        require(token.transfer(winner, winnerAmount), "payout failed");
+        // Transfer BNB to winner
+        (bool successWinner, ) = payable(winner).call{value: winnerAmount}("");
+        require(successWinner, "payout failed");
         
-        // Transfer fee to fee wallet
-        require(feeWallet != address(0), "invalid fee wallet");
-        require(token.transfer(feeWallet, fee), "fee transfer failed");
+        // Transfer fee
+        (bool successFee, ) = payable(feeWallet).call{value: fee}("");
+        require(successFee, "fee transfer failed");
 
         emit MatchSettled(matchId, winner, winnerAmount);
     }
 
-    // let queued player cancel and get tokens back
     function cancelQueue(uint256 stake, uint8 side_) external nonReentrant {
         require(side_ == uint8(Side.HEADS) || side_ == uint8(Side.TAILS), "invalid side");
         Side side = Side(side_);
@@ -187,29 +162,28 @@ contract ChanceCoinGame is ReentrancyGuard {
         require(q.addr == msg.sender, "not queued");
 
         delete singleSlotQueue[stake][side];
-        bool ok = token.transfer(msg.sender, stake);
-        require(ok, "refund transfer failed");
+        
+        // Refund BNB
+        (bool success, ) = payable(msg.sender).call{value: stake}("");
+        require(success, "refund failed");
+        
         emit PlayerCancelled(msg.sender, stake, side);
     }
 
-    // Manual settle function for testing/admin
     function testSettleMatch(uint256 matchId) external onlyOwner {
         _settleMatchPseudoRandom(matchId);
     }
 
-    // ADMIN: Update fee wallet
     function setFeeWallet(address _feeWallet) external onlyOwner {
         require(_feeWallet != address(0), "invalid address");
         feeWallet = _feeWallet;
     }
 
-    // ADMIN: Update fee percentage (in case you want to change it)
     function setFeePercentage(uint256 _feePercentage) external onlyOwner {
-        require(_feePercentage <= 10, "fee too high"); // Max 10%
+        require(_feePercentage <= 10, "fee too high");
         feePercentage = _feePercentage;
     }
 
-    // ADMIN: Add a new allowed stake amount
     function addAllowedStake(uint256 stake) external onlyOwner {
         for (uint i = 0; i < allowedStakes.length; i++) {
             require(allowedStakes[i] != stake, "stake already allowed");
@@ -217,7 +191,6 @@ contract ChanceCoinGame is ReentrancyGuard {
         allowedStakes.push(stake);
     }
 
-    // ADMIN: Remove an allowed stake amount
     function removeAllowedStake(uint256 stake) external onlyOwner {
         for (uint i = 0; i < allowedStakes.length; i++) {
             if (allowedStakes[i] == stake) {
@@ -229,24 +202,19 @@ contract ChanceCoinGame is ReentrancyGuard {
         revert("stake not found");
     }
 
-    // ADMIN: Replace all allowed stakes
     function setAllowedStakes(uint256[] memory _allowedStakes) external onlyOwner {
         allowedStakes = _allowedStakes;
     }
 
-    // View: Get all allowed stakes
     function getAllowedStakes() external view returns (uint256[] memory) {
         return allowedStakes;
     }
 
-    // withdraw accidentally stuck tokens (owner only)
-    function emergencyWithdrawToken(address _token, address to, uint256 amount) external onlyOwner {
-        IERC20(_token).transfer(to, amount);
-    }
-
-    // Withdraw any native BNB/ETH sent to the contract (owner only)
     function emergencyWithdrawBNB(address payable to, uint256 amount) external onlyOwner {
         require(address(this).balance >= amount, "Insufficient balance");
-        to.transfer(amount);
+        (bool success, ) = to.call{value: amount}("");
+        require(success, "withdraw failed");
     }
+
+    receive() external payable {}
 }
